@@ -1,0 +1,59 @@
+{
+  "logistic_regression": {
+    "model_name": "logistic_regression",
+    "model_type": "LogisticRegression",
+    "description": "Fast, simple linear model",
+    "metrics": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0
+    },
+    "training_data": {
+      "n_samples_train": 120,
+      "n_samples_test": 30,
+      "n_features": 4,
+      "n_classes": 3
+    },
+    "model_path": "C:\\Users\\akash\\Research project\\models\\artifacts\\logistic_regression.joblib",
+    "framework": "sklearn"
+  },
+  "random_forest": {
+    "model_name": "random_forest",
+    "model_type": "RandomForestClassifier",
+    "description": "Ensemble model with higher accuracy",
+    "metrics": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0
+    },
+    "training_data": {
+      "n_samples_train": 120,
+      "n_samples_test": 30,
+      "n_features": 4,
+      "n_classes": 3
+    },
+    "model_path": "C:\\Users\\akash\\Research project\\models\\artifacts\\random_forest.joblib",
+    "framework": "sklearn"
+  },
+  "svm": {
+    "model_name": "svm",
+    "model_type": "SVC",
+    "description": "Support Vector Machine with RBF kernel",
+    "metrics": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0
+    },
+    "training_data": {
+      "n_samples_train": 120,
+      "n_samples_test": 30,
+      "n_features": 4,
+      "n_classes": 3
+    },
+    "model_path": "C:\\Users\\akash\\Research project\\models\\artifacts\\svm.joblib",
+    "framework": "sklearn"
+  }
+}

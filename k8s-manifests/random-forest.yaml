@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: random-forest
+  namespace: default
+  labels:
+    app: ml-model
+    model: random-forest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-model
+      model: random-forest
+  template:
+    metadata:
+      labels:
+        app: ml-model
+        model: random-forest
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
+    spec:
+      initContainers:
+      - name: install-deps
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - pip install --target=/deps Flask==3.1.0 scikit-learn==1.5.2 joblib==1.4.2 numpy==2.1.3 prometheus-client==0.21.0
+        volumeMounts:
+        - name: deps
+          mountPath: /deps
+      containers:
+      - name: model-service
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - export PYTHONPATH=/deps:$PYTHONPATH && python /app/model_service.py
+        ports:
+        - containerPort: 5000
+          name: http
+        env:
+        - name: MODEL_NAME
+          value: "random-forest"
+        - name: MODEL_PATH
+          value: "/mnt/models/model.joblib"
+        - name: PORT
+          value: "5000"
+        volumeMounts:
+        - name: model-volume
+          mountPath: /mnt/models
+        - name: service-code
+          mountPath: /app
+        - name: deps
+          mountPath: /deps
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 45
+          periodSeconds: 5
+      volumes:
+      - name: model-volume
+        configMap:
+          name: random-forest-model
+      - name: service-code
+        configMap:
+          name: model-service-code
+      - name: deps
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: random-forest-service
+  namespace: default
+  labels:
+    app: ml-model
+    model: random-forest
+spec:
+  type: ClusterIP
+  selector:
+    app: ml-model
+    model: random-forest
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5000
+  - name: metrics
+    port: 5000
+    targetPort: 5000

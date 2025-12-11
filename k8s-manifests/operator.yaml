@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adaptive-router-operator
+  namespace: default
+  labels:
+    app: adaptive-router-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adaptive-router-operator
+  template:
+    metadata:
+      labels:
+        app: adaptive-router-operator
+    spec:
+      serviceAccountName: adaptive-router-operator
+      containers:
+      - name: operator
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          pip install kopf kubernetes prometheus-client requests &&
+          kopf run /operator/adaptive_router_operator.py --verbose
+        volumeMounts:
+        - name: operator-code
+          mountPath: /operator
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus-server.prometheus.svc.cluster.local"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      volumes:
+      - name: operator-code
+        configMap:
+          name: operator-code
+      restartPolicy: Always

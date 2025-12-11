@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traffic-generator
+  namespace: default
+  labels:
+    app: traffic-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traffic-generator
+  template:
+    metadata:
+      labels:
+        app: traffic-generator
+    spec:
+      containers:
+      - name: traffic-generator
+        image: python:3.9-slim
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - |
+            pip install requests --quiet
+            cat > /tmp/traffic.py << 'EOF'
+            import requests
+            import random
+            import time
+            import logging
+
+            logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s')
+
+            models = [
+                'http://logistic-regression-service:5000/predict',
+                'http://random-forest-service:5000/predict',
+                'http://svm-service:5000/predict'
+            ]
+
+            sample_data = [
+                {"instances": [[5.1, 3.5, 1.4, 0.2]]},
+                {"instances": [[6.2, 2.9, 4.3, 1.3]]},
+                {"instances": [[7.3, 3.0, 6.3, 1.8]]}
+            ]
+
+            logging.info("Traffic generator started")
+            logging.info(f"Sending requests to: {models}")
+
+            while True:
+                try:
+                    model_url = random.choice(models)
+                    data = random.choice(sample_data)
+
+                    response = requests.post(model_url, json=data, timeout=5)
+
+                    if response.status_code == 200:
+                        result = response.json()
+                        logging.info(f"Request to {model_url.split('/')[2]}: Success")
+                    else:
+                        logging.warning(f"Request failed: {response.status_code}")
+
+                except Exception as e:
+                    logging.error(f"Error: {e}")
+
+                time.sleep(1)
+            EOF
+            python /tmp/traffic.py
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
